@@ -1,0 +1,162 @@
+<html>
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script>
+		class Minesweeper {
+			
+			constructor() {
+				this.start();
+			}
+			
+			start() {
+
+				$('#main').html('');
+
+				let width  = $('#_w').val(),
+				    height = $('#_h').val(),
+				    mines  = $('#_m').val(),
+				    count  = width * height;
+
+				let map         = [],
+				    coordinates = [],
+				    log         = [];
+
+				for(let y = 0; y < height; y += 1) {
+					map[y] = [];
+					let _line = $('<div>').addClass('line').attr({id : 'line_' + y});
+					$('#main').append(_line);
+					for(let x = 0; x < width; x += 1) {
+						map[y][x] = 0;
+						coordinates.push({x, y});
+						$(_line).append(
+							$('<div>')
+								.addClass('box close')
+								.attr({
+									id : 'box_' + x + '_' + y
+								})
+								.click(
+									e => this.clickMine(
+										e.target.id,
+										{count, map, coordinates, log}
+									)
+								)
+						);
+					}
+				}
+			}
+
+			genMines(id, data) {
+				let _coordinates = this.id2coordinates(id);
+				let ignored = [_coordinates];
+				if(data.mines < data.count) {
+					let mineCount = 0;
+					console.log('>>>', mineCount, mines)
+					for(;mineCount < mines;) {
+						let index = (Math.random() * data.count) | 0;
+						let el = data.coordinates[index];
+						for(let i in ignored) {
+							if(
+								!el.checked &&
+								!(
+									el.x != ignored[i].x &&
+									el.y != ignored[i].y
+								)
+							) {
+								data.map[el.yl][e.x] = 9;
+								coordinates[index].checked = true;
+								$('#box_' + e.x + '_' + el.y).addClass('bomb');
+							}
+						}
+					}
+				}
+			}
+
+			clickMine(id, data) {
+				if(data.log.length) {
+					this.makeStep(id, data);
+				} else {
+					this.genMines(id, data);
+				}
+			}
+
+			id2coordinates(id) {
+				let arr = id.split('_');
+				return {
+					x : arr[1],
+					y : arr[2]
+				}
+			}
+
+			makeStep(id, data) {
+				coordinates
+			}
+
+		}
+
+
+		$(document).ready(e => {
+			let _game = new Minesweeper();
+			$('#gen').click(_game.start);
+		});
+	</script>
+	<style>
+		.line {
+			height: 15px;
+			width: 100%;
+		}
+		.box {
+			width: 15px;
+			height: 15px;
+			border: 1px solid #aaaaaa;
+			font-weight: bold;
+			line-height: 15px;
+			display: inline-block;
+		}
+		.close {
+			width: 9px;
+			height: 9px;
+			background-color: #aaaaaa;
+			border: 3px outset;
+		}
+		.open {
+			background-color: #c0c0c0;
+		}
+		.bomb {
+			background-color: red;
+		}
+		.color_1 {
+			color: blue;
+		}
+		.color_2 {
+			color: green;
+		}
+		.color_3 {
+			color: red;
+		}
+		.color_4 {
+			color: #000080;
+		}
+		.color_5 {
+			color : #800000;
+		}
+		.color_6 {
+			color : #008080;
+		}
+		.color_7 {
+			color : #000000;
+		}
+		.color_8 {
+			color : #808080;
+		}
+	</style>
+</head>
+<body>
+	<div id="bar">
+		<input id="_w" value="10"/>
+		<input id="_h" value="10"/>
+		<input id="_m" value="10"/>
+		<button id="gen">GEN</button>
+	</div>
+	<div id="main"></div>
+</body>
+</html>
