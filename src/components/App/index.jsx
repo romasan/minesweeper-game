@@ -1,4 +1,7 @@
 import React, {Component} from 'react';
+import update from 'immutability-helper';
+import classNames from 'classnames';
+
 import './style.scss';
 
 const EMPTY = 0,
@@ -7,23 +10,33 @@ const EMPTY = 0,
 const MAX_WIDTH = 20,
       MAX_HEIGHT = 20;
 
-const checkAround = (items, x, y) => {
+const around = (items, p) => {
 
-  let count = 0;
+  const {x, y} = p;
 
-  count += (x > 0                   && y > 0 && items[y - 1][x - 1] == BOMB);
-  count += (                           y > 0 && items[y - 1][x    ] == BOMB);
-  count += (x < items[0].length - 1 && y > 0 && items[y - 1][x + 1] == BOMB);
+  let list = []
 
-  count += (x > 0                   && items[y][x - 1] == BOMB);
-  count += (x < items[0].length - 1 && items[y][x + 1] == BOMB);
+  if (x > 0                   && y > 0               ) { list.push(items[y - 1][x - 1]); }
+  if (                           y > 0               ) { list.push(items[y - 1][x    ]); }
+  if (x < items[y].length - 1 && y > 0               ) { list.push(items[y - 1][x + 1]); }
+  if (x > 0                                          ) { list.push(items[y    ][x - 1]); }
+  if (x < items[y].length - 1                        ) { list.push(items[y    ][x + 1]); }
+  if (x > 0                   && y < items.length - 1) { list.push(items[y + 1][x - 1]); }
+  if (                           y < items.length - 1) { list.push(items[y + 1][x    ]); }
+  if (x < items[y].length - 1 && y < items.length - 1) { list.push(items[y + 1][x + 1]); }
 
-  count += (x > 0                   && y < items.length - 1 && items[y + 1][x - 1] == BOMB);
-  count += (                           y < items.length - 1 && items[y + 1][x    ] == BOMB);
-  count += (x < items[0].length - 1 && y < items.length - 1 && items[y + 1][x + 1] == BOMB);
+  return list;
+};
 
-  return count;
-}
+const sumAround = (items, p) => around(items, p).reduce((sum, item) => sum += item.value == BOMB, 0);
+
+const getSpaces = (items, spaces, p) => {
+  const {x, y} = p;
+  // spaces.push(p);
+  // const beside = around(items, p).filter(e.value == EMPTY);
+  // return _(spaces, beside);
+  console.log('@', items, spaces, p)
+};
 
 class App extends Component {
 
@@ -31,7 +44,7 @@ class App extends Component {
     super(props);
     this.state = {
       items: [],
-      width: 7,
+      width: 10,
       height: 10,
       bombs_count: 10,
     };
@@ -41,47 +54,104 @@ class App extends Component {
     this.generateField();
   }
 
-  generateField () {
+  generateField = () => {
 
     const {width, height, bombs_count} = this.state;
 
-    let items = [...new Array(~~height)].map(() => [...new Array(~~width)].map(() => EMPTY));
+    let items = [
+      ...new Array(~~height)
+    ].map(
+      (e, y) => [
+        ...new Array(~~width)
+      ].map((e, x) => ({
+        'value': EMPTY,
+        'open': false,
+        'checked': false,
+        x,
+        y
+      }))
+    );
+
     const bombs = [...new Array(~~width * ~~height)]
       .map((e, i) => ({
-        x: i % ~~width,
-        y: ~~(i / ~~width)
+        'x': i % ~~width,
+        'y': ~~(i / ~~width)
       }))
       .sort(() => Math.random() - 0.5)
       .slice(0, ~~bombs_count);
 
-    bombs.forEach(e => {
-      items[e.y][e.x] = BOMB;
+    bombs.forEach(({x, y}) => {
+      items[y][x].value = BOMB;
     });
 
-    items = items.map((line, y) => line.map((item, x) => item == BOMB ? item : checkAround(items, x, y)))
+    items = items.map((line, y) => line.map(
+      (item, x) => item.value == BOMB
+        ? item
+        : {
+          ...item,
+          'value': sumAround(items, {x, y})
+        }
+    ));
 
     this.setState({items});
   }
 
-  setWidth (e) {
-    this.setState({width: ~~e.target.value});
-    // setTimeout(() => {
-    //   this.generateField();
-    // }, 0);
+  handleChange = name => event => {
+    this.setState({
+      [name]: ~~event.target.value
+    });
   }
 
-  setHeight (e) {
-    this.setState({height: ~~e.target.value});
-    // setTimeout(() => {
-    //   this.generateField();
-    // }, 0);
+  open = p => e => {
+    
+    const {x, y} = p;
+    const {open, checked, value} = this.state.items[y][x];
+
+    if (open || checked) {
+      return;
+    }
+
+    if (value == BOMB) {
+      console.log('show explosion');
+    }
+
+    if (value == EMPTY) {
+      console.log('show empty fields beside');
+      const spaces = getSpaces(this.state.items, [], {x, y});
+      // spaces.forEach();
+    }
+
+    this.setState(state => ({'items': update(state.items, {
+      [y]: {
+        [x]: {
+          'open': {$set: true}
+        }
+      }
+    })}));
+
+    // this.checkFinish();
   }
 
-  setBombsCount (e) {
-    this.setState({bombs_count: ~~e.target.value});
-    // setTimeout(() => {
-    //   this.generateField();
-    // }, 0);
+  check = p => e => {
+
+    e.preventDefault();
+
+    const {x, y} = p;
+    const {open, checked} = this.state.items[y][x];
+
+    if (open) {
+      return;
+    }
+
+    this.setState(state => ({'items': update(state.items, {
+      [y]: {
+        [x]: {
+          'checked': {$set: !checked}
+        }
+      }
+    })}));
+
+    // this.checkFinish();
   }
 
   render () {
@@ -92,15 +162,28 @@ class App extends Component {
       <div className="app">
         <div className="header">Minesweeper</div>
         <div className="bar">
-          Width:  <input size="2" onChange={this.setWidth.bind(this)}      value={width}/>&nbsp;
-          Height: <input size="2" onChange={this.setHeight.bind(this)}     value={height}/>&nbsp;
-          Count:  <input size="2" onChange={this.setBombsCount.bind(this)} value={bombs_count}/>&nbsp;
-          <button onClick={this.generateField.bind(this)}>Generate</button>
+          Width:  <input size="2" onChange={this.handleChange('width')}       value={width}/>&nbsp;
+          Height: <input size="2" onChange={this.handleChange('height')}      value={height}/>&nbsp;
+          Count:  <input size="2" onChange={this.handleChange('bombs_count')} value={bombs_count}/>&nbsp;
+          <button onClick={this.generateField}>Generate</button>
         </div>
         <div className="field">
           {items.map(
             (line, y) => <div key={y}>{line.map(
-              (item, x) => <div key={`${x}_${y}`} className={`item color-${item}`}>{item}</div>
+              (item, x) => (
+                <div
+                  key={`${x}_${y}`}
+                  className={classNames('item', {
+                    [`color-${item.value}`]: typeof item.value == 'number',
+                    'open': item.open,
+                    'checked': item.checked
+                  })}
+                  onClick={this.open({x, y})}
+                  onContextMenu={this.check({x, y})}
+                >
+                  {item.open ? item.value : ''}
+                </div>
+              )
             )}</div>
           )}
         </div>

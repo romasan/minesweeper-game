@@ -18,17 +18,27 @@ html, body {
   .field {
     border: 1px solid #ffffff;
     padding: 10px;
+    > div {
+      display: flex;
+    }
     .item {
       display: inline-block;
       width: 20px;
       height: 20px;
-      background: #afafaf;
+      background: #cfcfcf;
       text-align: center;
-      border: 2px inset;
+      border: 2px outset;
       font-family: "Courier New";
       font-weight: bold;
       font-size: 9pt;
       line-height: 20px;
+      &.open {
+        border: 2px inset;
+      }
+      &.checked:after {
+        content: '⚑';
+        color: #000000;
+      }
     }
     .color-0 {
 			color: transparent;
