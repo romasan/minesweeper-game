@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
+import without from 'lodash/without';
 import classNames from 'classnames';
 
 import './style.scss';
@@ -30,12 +31,21 @@ const around = (items, p) => {
 
 const sumAround = (items, p) => around(items, p).reduce((sum, item) => sum += item.value == BOMB, 0);
 
-const getSpaces = (items, spaces, p) => {
+const getSpaces = (items, p) => {
+
   const {x, y} = p;
-  // spaces.push(p);
-  // const beside = around(items, p).filter(e.value == EMPTY);
-  // return _(spaces, beside);
-  console.log('@', items, spaces, p)
+  const item = items[y][x];
+
+  let queue = [item];
+  let used = [];
+
+  while (queue.length) {
+    const node = queue.shift();
+    used.push(node);
+    queue.push(...without(around(items, node).filter(e => e.value == EMPTY), ...used, ...queue));
+  }
+
+  return used;
 };
 
 class App extends Component {
@@ -117,7 +127,17 @@ class App extends Component {
 
     if (value == EMPTY) {
       console.log('show empty fields beside');
-      const spaces = getSpaces(this.state.items, [], {x, y});
+      const spaces = getSpaces(this.state.items, {x, y});
+      console.log(spaces)
+      spaces.forEach(e => {
+        this.setState(state => ({'items': update(state.items, {
+          [e.y]: {
+            [e.x]: {
+              'open': {$set: true}
+            }
+          }
+        })}));
+      })
       // spaces.forEach();
     }
 
