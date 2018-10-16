@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
+import get from 'lodash/get';
 import without from 'lodash/without';
 import classNames from 'classnames';
 
@@ -11,23 +12,12 @@ const EMPTY = 0,
 const MAX_WIDTH = 20,
       MAX_HEIGHT = 20;
 
-const around = (items, p) => {
-
-  const {x, y} = p;
-
-  let list = []
-
-  if (x > 0                   && y > 0               ) { list.push(items[y - 1][x - 1]); }
-  if (                           y > 0               ) { list.push(items[y - 1][x    ]); }
-  if (x < items[y].length - 1 && y > 0               ) { list.push(items[y - 1][x + 1]); }
-  if (x > 0                                          ) { list.push(items[y    ][x - 1]); }
-  if (x < items[y].length - 1                        ) { list.push(items[y    ][x + 1]); }
-  if (x > 0                   && y < items.length - 1) { list.push(items[y + 1][x - 1]); }
-  if (                           y < items.length - 1) { list.push(items[y + 1][x    ]); }
-  if (x < items[y].length - 1 && y < items.length - 1) { list.push(items[y + 1][x + 1]); }
-
-  return list;
-};
+const around = (items, p) => [
+    [-1, -1], [-1,  0], [-1, +1],
+    [ 0, -1],           [ 0, +1],
+    [+1, -1], [+1,  0], [+1, +1]
+  ].map(([y, x]) => get(items, [p.y + y, p.x + x]))
+    .filter(e => e);
 
 const sumAround = (items, p) => around(items, p).reduce((sum, item) => sum += item.value == BOMB, 0);
 
@@ -38,6 +28,7 @@ const getSpaces = (items, p) => {
 
   let queue = [item];
   let used = [];
+  let spaces = [...used];
 
   while (queue.length) {
     const node = queue.shift();
@@ -45,7 +36,11 @@ const getSpaces = (items, p) => {
     queue.push(...without(around(items, node).filter(e => e.value == EMPTY), ...used, ...queue));
   }
 
-  return used;
+  used.forEach(e => {
+    spaces.push(...without(around(items, e), ...spaces));
+  });
+
+  return spaces;
 };
 
 class App extends Component {
