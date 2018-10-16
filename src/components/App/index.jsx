@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
 import get from 'lodash/get';
-import without from 'lodash/without';
+import uniq from 'lodash/uniq';
 import classNames from 'classnames';
 
 import './style.scss';
@@ -33,12 +33,17 @@ const getSpaces = (items, p) => {
   while (queue.length) {
     const node = queue.shift();
     used.push(node);
-    queue.push(...without(around(items, node).filter(e => e.value == EMPTY), ...used, ...queue));
+    queue.push(...around(items, node).filter(
+      e => e.value == EMPTY
+      && !used.find(o => o.x == e.x && o.y == e.y)
+      && !queue.find(o => o.x == e.x && o.y == e.y)
+    ));
   }
 
   used.forEach(e => {
-    spaces.push(...without(around(items, e), ...spaces));
+    spaces.push(...around(items, e));
   });
+  spaces = uniq(spaces);
 
   return spaces;
 };
@@ -49,8 +54,8 @@ class App extends Component {
     super(props);
     this.state = {
       items: [],
-      width: 10,
-      height: 10,
+      width: 30,
+      height: 30,
       bombs_count: 10,
     };
   }
@@ -121,9 +126,7 @@ class App extends Component {
     }
 
     if (value == EMPTY) {
-      console.log('show empty fields beside');
       const spaces = getSpaces(this.state.items, {x, y});
-      console.log(spaces)
       spaces.forEach(e => {
         this.setState(state => ({'items': update(state.items, {
           [e.y]: {
@@ -132,8 +135,7 @@ class App extends Component {
             }
           }
         })}));
-      })
-      // spaces.forEach();
+      });
     }
 
     this.setState(state => ({'items': update(state.items, {
