@@ -2,12 +2,13 @@ import React, {Component} from 'react';
 import update from 'immutability-helper';
 import get from 'lodash/get';
 import uniq from 'lodash/uniq';
+import flatten from 'lodash/flatten';
 import classNames from 'classnames';
 
 import './style.scss';
 
 const EMPTY = 0,
-      BOMB  = '*';
+      BOMB  = '💣';
 
 const MAX_WIDTH = 20,
       MAX_HEIGHT = 20;
@@ -146,7 +147,7 @@ class App extends Component {
       }
     })}));
 
-    // this.checkFinish();
+    this.checkFinish();
   }
 
   check = p => e => {
@@ -168,7 +169,25 @@ class App extends Component {
       }
     })}));
 
-    // this.checkFinish();
+    this.checkFinish();
+  }
+
+  checkFinish () {
+
+    const {checked, open} = flatten(this.state.items).reduce(
+      ({checked, open}, item) => ({'open': open + item.open, 'checked': checked + item.checked}), {'open': 0, 'checked': 0}
+    );
+
+    const {bombs_count, width, height} = this.state;
+
+    console.log('#', checked, bombs_count, '-', open + checked, width * height, '-', open, checked, width, height)
+
+    if (
+      checked == bombs_count
+     && (open + checked) == (width * height)
+    ) {
+      console.log('Win :)');
+    }
   }
 
   render () {
