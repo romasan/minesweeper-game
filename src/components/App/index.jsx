@@ -147,7 +147,7 @@ class App extends Component {
       }
     })}));
 
-    this.checkFinish();
+    setImmediate(() => this.checkFinish());
   }
 
   check = p => e => {
@@ -169,7 +169,7 @@ class App extends Component {
       }
     })}));
 
-    this.checkFinish();
+    setImmediate(() => this.checkFinish());
   }
 
   checkFinish () {
@@ -179,8 +179,6 @@ class App extends Component {
     );
 
     const {bombs_count, width, height} = this.state;
-
-    console.log('#', checked, bombs_count, '-', open + checked, width * height, '-', open, checked, width, height)
 
     if (
       checked == bombs_count
