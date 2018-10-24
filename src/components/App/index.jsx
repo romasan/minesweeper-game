@@ -1,9 +1,11 @@
-import React, {Component} from 'react';
+import React, {Component} from 'preact-compat';
 import update from 'immutability-helper';
-import get     from 'lodash/get';
-import uniq    from 'lodash/uniq';
-import flatten from 'lodash/flatten';
 import classNames from 'classnames';
+
+const get = (e, a) => a.reduce((p, n) => p && p[n], e);
+const equal = (a, b) => a === b;
+const uniq = a => a.reduce((l, e) => l.some(x => equal(x, e)) ? l : [...l, e], []);
+const flatten = a => a.reduce((l, e) => e && Array.isArray(e) ? [...l, ...e] : [...l, e], []);
 
 import './style.scss';
 
@@ -33,6 +35,7 @@ const getSpaces = (items, p) => {
 
   while (queue.length) {
     const node = queue.shift();
+    console.log('# getSpaces', queue.length, node, 'around:', around(items, node))
     used.push(node);
     queue.push(...around(items, node).filter(
       e => e.value == EMPTY
@@ -134,8 +137,11 @@ class App extends Component {
       console.log('show explosion');
     }
 
+    
     if (value == EMPTY) {
       const spaces = getSpaces(this.state.items, {x, y});
+      const debug = [[1,2],[3,4]];
+      console.log('# open', {x, y}, spaces, 'debug get:', get(debug, [1, 1]), get);
       spaces.forEach(e => {
         this.setState(state => ({'items': update(state.items, {
           [e.y]: {
