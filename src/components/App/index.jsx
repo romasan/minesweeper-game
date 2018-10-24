@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import update from 'immutability-helper';
-import get from 'lodash/get';
-import uniq from 'lodash/uniq';
+import get     from 'lodash/get';
+import uniq    from 'lodash/uniq';
 import flatten from 'lodash/flatten';
 import classNames from 'classnames';
 
@@ -54,10 +54,11 @@ class App extends Component {
   constructor (props) {
     super(props);
     this.state = {
-      items: [],
-      width: 30,
-      height: 30,
-      bombs_count: 10,
+      items: []
+    , width: 10
+    , height: 10
+    , bombs_count: 10
+    , settings: false
     };
   }
 
@@ -75,18 +76,18 @@ class App extends Component {
       (e, y) => [
         ...new Array(~~width)
       ].map((e, x) => ({
-        'value': EMPTY,
-        'open': false,
-        'checked': false,
-        x,
-        y
+        'value': EMPTY
+      , 'open': false
+      , 'checked': false
+      , x
+      , y
       }))
     );
 
     const bombs = [...new Array(~~width * ~~height)]
       .map((e, i) => ({
-        'x': i % ~~width,
-        'y': ~~(i / ~~width)
+        'x': i % ~~width
+      , 'y': ~~(i / ~~width)
       }))
       .sort(() => Math.random() - 0.5)
       .slice(0, ~~bombs_count);
@@ -99,12 +100,19 @@ class App extends Component {
       (item, x) => item.value == BOMB
         ? item
         : {
-          ...item,
-          'value': sumAround(items, {x, y})
+          ...item
+        , 'value': sumAround(items, {x, y})
         }
     ));
 
     this.setState({items});
+  }
+
+  toggleSettings = () => {
+    const {settings} = this.state;
+    this.setState({
+      'settings': !settings
+    });
   }
 
   handleChange = name => event => {
@@ -190,16 +198,19 @@ class App extends Component {
 
   render () {
 
-    const {width, height, bombs_count, items} = this.state;
+    const {width, height, bombs_count, items, settings} = this.state;
 
     return (
       <div className="app">
         <div className="header">Minesweeper</div>
         <div className="bar">
-          Width:  <input size="2" onChange={this.handleChange('width')}       value={width}/>&nbsp;
-          Height: <input size="2" onChange={this.handleChange('height')}      value={height}/>&nbsp;
-          Count:  <input size="2" onChange={this.handleChange('bombs_count')} value={bombs_count}/>&nbsp;
-          <button onClick={this.generateField}>Generate</button>
+          <button onClick={this.toggleSettings}>⚙</button>
+          <span className={classNames('settings', {'hidden': !settings})}>
+            Width:  <input type="text" size="2" onChange={this.handleChange('width')}       value={width}/>&nbsp;
+            Height: <input type="text" size="2" onChange={this.handleChange('height')}      value={height}/>&nbsp;
+            Count:  <input type="text" size="2" onChange={this.handleChange('bombs_count')} value={bombs_count}/>&nbsp;
+            <button onClick={this.generateField}>Generate</button>
+          </span>
         </div>
         <div className="field">
           {items.map(
@@ -215,7 +226,7 @@ class App extends Component {
                   onClick={this.open({x, y})}
                   onContextMenu={this.check({x, y})}
                 >
-                  {item.open ? item.value : ''}
+                  {item.open ? item.value : item.checked ? '' : '\u00A0'}
                 </div>
               )
             )}</div>

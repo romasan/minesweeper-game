@@ -1,7 +1,7 @@
 {
   "name": "romasan.github.io",
   "version": "1.2.0",
-  "description": "i",
+  "description": "Minesweeper game",
   "author": "Roman Bauer",
   "homepage": "https://romasan.github.io",
   "scripts": {
@@ -9,12 +9,15 @@
     "build": "webpack --mode production"
   },
   "devDependencies": {
+    "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",
     "@babel/plugin-proposal-class-properties": "^7.1.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/preset-react": "^7.0.0",
     "babel-loader": "^8.0.4",
+    "babel-plugin-lodash": "^3.3.4",
     "css-loader": "^1.0.0",
+    "lodash-webpack-plugin": "^0.11.5",
     "mini-css-extract-plugin": "^0.4.3",
     "node-sass": "^4.9.3",
     "optimize-css-assets-webpack-plugin": "^5.0.1",
