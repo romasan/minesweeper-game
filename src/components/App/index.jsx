@@ -2,21 +2,16 @@ import React, {Component} from 'preact-compat';
 import update from 'immutability-helper';
 import classNames from 'classnames';
 
-import {get, uniq, flatten} from '../../helpers';
+import {get, uniq, flatten, around2d} from '../../helpers';
 import './style.scss';
 
 const EMPTY = ' ',
       BOMB  = '💣';
 
-const MAX_WIDTH = 20,
+const MIN_WIDTH  = 8,
+      MIN_HEIGHT = 8,
+      MAX_WIDTH  = 20,
       MAX_HEIGHT = 20;
-
-const around2d = (items, {x, y}) => [
-    [-1, -1], [-1,  0], [-1, +1],
-    [ 0, -1],           [ 0, +1],
-    [+1, -1], [+1,  0], [+1, +1]
-  ].map(([_y, _x]) => get(items, [y + _y, x + _x]))
-    .filter(e => e);
 
 class App extends Component {
 
@@ -124,7 +119,7 @@ class App extends Component {
     const {x, y} = p;
     const {open, checked, value} = this.state.items[y][x];
 
-    if (open || checked) {
+    if (open || checked || e.buttons == 2) {
       return;
     }
 
@@ -156,11 +151,10 @@ class App extends Component {
     setImmediate(() => this.checkFinish());
   }
 
-  check = p => e => {
+  check = ({x, y}) => e => {
 
     e.preventDefault();
 
-    const {x, y} = p;
     const {open, checked} = this.state.items[y][x];
 
     if (open) {
@@ -176,6 +170,33 @@ class App extends Component {
     })}));
 
     setImmediate(() => this.checkFinish());
+  }
+
+  freeAround = item => e => {
+
+    if (e.buttons == 3 && [0, 2].includes(e.button)) {
+
+      const spaces = around2d(this.state.items, item);
+      const checkedAround = spaces.reduce((sum, {checked}) => sum += checked, 0);
+
+      if (checkedAround == item.value && item.value != EMPTY) {
+        [item, ...spaces].forEach((item) => {
+          if (!item.checked) {
+            // this.setState(state => ({'items': update(state.items, {
+            //   [y]: {
+            //     [x]: {
+            //       'open': {$set: true}
+            //     }
+            //   }
+            // })}));
+            this.open(item)({});
+          }
+        });
+      }
+      
+      e.preventDefault();
+      return;
+    }
   }
 
   checkFinish () {
@@ -222,8 +243,9 @@ class App extends Component {
                     'checked': item.checked,
                     'explosion': item.open && item.value == BOMB
                   })}
-                  onClick={this.open({x, y})}
-                  onContextMenu={this.check({x, y})}
+                  onClick={this.open(item)}
+                  onContextMenu={this.check(item)}
+                  onMouseDown={this.freeAround(item)}
                 >
                   {item.open ? item.value : item.checked ? '' : '\u00A0'}
                 </div>
