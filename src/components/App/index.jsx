@@ -2,66 +2,32 @@ import React, {Component} from 'preact-compat';
 import update from 'immutability-helper';
 import classNames from 'classnames';
 
-const get = (e, a) => a.reduce((p, n) => p && p[n], e);
-const equal = (a, b) => a === b;
-const uniq = a => a.reduce((l, e) => l.some(x => equal(x, e)) ? l : [...l, e], []);
-const flatten = a => a.reduce((l, e) => e && Array.isArray(e) ? [...l, ...e] : [...l, e], []);
-
+import {get, uniq, flatten} from '../../helpers';
 import './style.scss';
 
-const EMPTY = 0,
+const EMPTY = ' ',
       BOMB  = '💣';
 
 const MAX_WIDTH = 20,
       MAX_HEIGHT = 20;
 
-const around = (items, p) => [
+const around2d = (items, {x, y}) => [
     [-1, -1], [-1,  0], [-1, +1],
     [ 0, -1],           [ 0, +1],
     [+1, -1], [+1,  0], [+1, +1]
-  ].map(([y, x]) => get(items, [p.y + y, p.x + x]))
+  ].map(([_y, _x]) => get(items, [y + _y, x + _x]))
     .filter(e => e);
-
-const sumAround = (items, p) => around(items, p).reduce((sum, item) => sum += item.value == BOMB, 0);
-
-const getSpaces = (items, p) => {
-
-  const {x, y} = p;
-  const item = items[y][x];
-
-  let queue = [item];
-  let used = [];
-  let spaces = [...used];
-
-  while (queue.length) {
-    const node = queue.shift();
-    console.log('# getSpaces', queue.length, node, 'around:', around(items, node))
-    used.push(node);
-    queue.push(...around(items, node).filter(
-      e => e.value == EMPTY
-      && !used.find(o => o.x == e.x && o.y == e.y)
-      && !queue.find(o => o.x == e.x && o.y == e.y)
-    ));
-  }
-
-  used.forEach(e => {
-    spaces.push(...around(items, e));
-  });
-  spaces = uniq(spaces);
-
-  return spaces;
-};
 
 class App extends Component {
 
   constructor (props) {
     super(props);
     this.state = {
-      items: []
-    , width: 10
-    , height: 10
-    , bombs_count: 10
-    , settings: false
+      'items': []
+    , 'width': 10
+    , 'height': 10
+    , 'bombs_count': 10
+    , 'settings': false
     };
   }
 
@@ -99,12 +65,12 @@ class App extends Component {
       items[y][x].value = BOMB;
     });
 
-    items = items.map((line, y) => line.map(
-      (item, x) => item.value == BOMB
+    items = items.map(line => line.map(
+      item => item.value == BOMB
         ? item
         : {
           ...item
-        , 'value': sumAround(items, {x, y})
+        , 'value': around2d(items, item).reduce((sum, {value}) => sum += value == BOMB, 0)
         }
     ));
 
@@ -124,6 +90,35 @@ class App extends Component {
     });
   }
 
+  getSpaces = p => {
+
+    const {items} = this.state;
+
+    const {x, y} = p;
+    const item = items[y][x];
+  
+    let queue = [item];
+    let used = [];
+    let spaces = [...used];
+  
+    while (queue.length) {
+      const node = queue.shift();
+      used.push(node);
+      queue.push(...around2d(items, node).filter(
+        e => e.value == EMPTY
+        && !used.find(o => o.x == e.x && o.y == e.y)
+        && !queue.find(o => o.x == e.x && o.y == e.y)
+      ));
+    }
+  
+    used.forEach(e => {
+      spaces.push(...around2d(items, e));
+    });
+    spaces = uniq(spaces);
+  
+    return spaces;
+  }
+
   open = p => e => {
     
     const {x, y} = p;
@@ -134,18 +129,15 @@ class App extends Component {
     }
 
     if (value == BOMB) {
-      console.log('show explosion');
+      // console.log('show explosion');1
     }
-
     
     if (value == EMPTY) {
-      const spaces = getSpaces(this.state.items, {x, y});
-      const debug = [[1,2],[3,4]];
-      console.log('# open', {x, y}, spaces, 'debug get:', get(debug, [1, 1]), get);
-      spaces.forEach(e => {
+      const spaces = this.getSpaces(p);
+      spaces.forEach(({x, y}) => {
         this.setState(state => ({'items': update(state.items, {
-          [e.y]: {
-            [e.x]: {
+          [y]: {
+            [x]: {
               'open': {$set: true}
             }
           }
@@ -227,7 +219,8 @@ class App extends Component {
                   className={classNames('item', {
                     [`color-${item.value}`]: typeof item.value == 'number',
                     'open': item.open,
-                    'checked': item.checked
+                    'checked': item.checked,
+                    'explosion': item.open && item.value == BOMB
                   })}
                   onClick={this.open({x, y})}
                   onContextMenu={this.check({x, y})}

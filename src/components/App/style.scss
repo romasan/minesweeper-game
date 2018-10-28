@@ -51,12 +51,27 @@ body {
       font-weight: bold;
       font-size: 9pt;
       line-height: 20px;
+      position: relative;
       &.open {
         border: 2px inset;
       }
       &.checked:after {
         content: '⚑';
         color: #000000;
+      }
+      &.explosion:after {
+        content: '';
+        width: 86px;
+        height: 86px;
+        position: absolute;
+        top: -33px;
+        left: -33px;
+        background: url(/assets/explosion.png);
+        z-index: 2;
+        animation-name: explosion;
+        animation-fill-mode: forwards;
+        animation-duration: 750ms;
+        animation-timing-function: step-end;
       }
     }
     .color-0 {
@@ -86,5 +101,27 @@ body {
 		.color-8 {
 			color : #808080;
 		}
+  }
+}
+
+@keyframes explosion {
+  0% {
+    background-position: 0px 0px;
+  }
+  20% {
+    background-position: 86px 0px;
+  }
+  40% {
+    background-position: 172px 0px;
+  }
+  60% {
+    background-position: 258px 0px;
+  }
+  80% {
+    background-position: 344px 0px;
+  }
+  100% {
+    width: 0px;
+    height: 0px;
   }
 }
