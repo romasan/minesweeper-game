@@ -3,8 +3,15 @@
   <head>
     <meta charset="utf-8">
     <title>Minesweeper</title>
-    <script async src="./dist/bundle.js"></script>
-    <link rel="stylesheet" href="./dist/bundle.css"/>
+    <script src="./dist/bundle.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        Elm.Index.init({
+          node: document.querySelector('#wrap')
+        });
+      });
+    </script>
+    <!-- <link rel="stylesheet" href="./dist/bundle.css"/> -->
   </head>
   <body>
     <div id="wrap"></div>
